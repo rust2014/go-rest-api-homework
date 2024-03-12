@@ -74,6 +74,12 @@ func createTasks(w http.ResponseWriter, r *http.Request) { // создание �
 		http.Error(w, err.Error(), http.StatusBadRequest) // 400
 		return
 	}
+	// проверка ID
+	if _, exists := tasks[task.ID]; exists {
+		http.Error(w, "Этот ID занят", http.StatusBadRequest) // 400
+		return
+	}
+
 	tasks[task.ID] = task             // cоздаем задачу
 	w.WriteHeader(http.StatusCreated) // статус 201
 }
@@ -81,7 +87,7 @@ func deleteTaskID(w http.ResponseWriter, r *http.Request) { // удаление 
 	taskId := chi.URLParam(r, "id") // значение id
 	_, ok := tasks[taskId]
 	if !ok {
-		http.Error(w, "Задача не найдена", http.StatusBadRequest) // 400
+		http.Error(w, "Задача была удалена", http.StatusBadRequest) // 400
 		return
 	}
 	delete(tasks, taskId) // удалить задачу
@@ -92,9 +98,10 @@ func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
-	r.Get("/tasks", getAllTasks)    // обрабочик для получения всех задач
-	r.Post("/tasks", createTasks)   // создание задач
-	r.Get("/tasks/{id}", getTaskID) // обработчик доя задачи по ID
+	r.Get("/tasks", getAllTasks)          // обрабочик для получения всех задач
+	r.Post("/tasks", createTasks)         // создание задач
+	r.Get("/tasks/{id}", getTaskID)       // обработчик доя задачи по ID
+	r.Delete("/tasks/{id}", deleteTaskID) // обработчик для удаления задачи
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
